@@ -1,0 +1,18 @@
+{
+  "name": "london-underground-dakboard",
+  "version": "1.0.0",
+  "description": "Live London Underground dashboards and DAKboard widgets powered by TfL data.",
+  "type": "module",
+  "scripts": {
+    "start": "node dakboard-json-server.mjs",
+    "static": "python3 -m http.server 8000"
+  },
+  "keywords": [
+    "dakboard",
+    "tfl",
+    "london-underground",
+    "tube-status"
+  ],
+  "author": "Will Curtis",
+  "license": "MIT"
+}

@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>London Underground Status</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f3f5f8;
+        --ink: #111827;
+        --muted: #5d6675;
+        --panel: #ffffff;
+        --border: #d8dee8;
+        --good: #0b7f3a;
+        --warning: #b45309;
+        --bad: #b91c1c;
+        --unknown: #4b5563;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      .page {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 36px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 18px;
+        align-items: end;
+        margin-bottom: 22px;
+      }
+
+      h1 {
+        margin: 0;
+        color: #0019a8;
+        font-size: clamp(2rem, 4vw, 3.5rem);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .lede {
+        margin: 10px 0 0;
+        max-width: 720px;
+        color: var(--muted);
+        font-size: 1rem;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      button {
+        min-height: 42px;
+        border: 0;
+        border-radius: 8px;
+        padding: 0 16px;
+        background: #0019a8;
+        color: white;
+        font: inherit;
+        font-weight: 750;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        cursor: wait;
+        opacity: 0.7;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .pill {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        padding: 8px 12px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .status-banner {
+        display: none;
+        margin-bottom: 16px;
+        border: 1px solid #f3b6b6;
+        border-radius: 8px;
+        background: #fff1f1;
+        padding: 12px 14px;
+        color: #8a1111;
+      }
+
+      .status-banner.visible {
+        display: block;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+      }
+
+      .line-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 184px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: 0 10px 28px rgba(17, 24, 39, 0.08);
+      }
+
+      .line-card::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 12px;
+        background: var(--line-colour);
+      }
+
+      .card-inner {
+        display: grid;
+        gap: 14px;
+        height: 100%;
+        padding: 18px 18px 18px 28px;
+      }
+
+      .line-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .line-name {
+        margin: 0;
+        font-size: 1.35rem;
+        line-height: 1.1;
+      }
+
+      .line-swatch {
+        flex: 0 0 auto;
+        width: 48px;
+        height: 8px;
+        margin-top: 5px;
+        border-radius: 999px;
+        background: var(--line-colour);
+      }
+
+      .zone {
+        color: var(--muted);
+        font-size: 0.88rem;
+        font-weight: 650;
+      }
+
+      .status-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .status {
+        border-radius: 999px;
+        padding: 7px 10px;
+        color: white;
+        background: var(--unknown);
+        font-size: 0.86rem;
+        font-weight: 800;
+      }
+
+      .status.good {
+        background: var(--good);
+      }
+
+      .status.warning {
+        background: var(--warning);
+      }
+
+      .status.bad {
+        background: var(--bad);
+      }
+
+      .severity {
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      .reason {
+        margin: 0;
+        color: #293241;
+        font-size: 0.94rem;
+        line-height: 1.45;
+      }
+
+      .route {
+        align-self: end;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      .loading .line-card {
+        opacity: 0.72;
+      }
+
+      footer {
+        margin-top: 22px;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      @media (max-width: 680px) {
+        .page {
+          width: min(100% - 22px, 1180px);
+          padding-top: 20px;
+        }
+
+        header {
+          grid-template-columns: 1fr;
+          align-items: start;
+        }
+
+        .controls {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <div>
+          <h1>London Underground Status</h1>
+          <p class="lede">
+            Live TfL service status for Tube lines serving London fare zones 1-6,
+            colourised with each line's official Transport for London colour.
+          </p>
+        </div>
+        <div class="controls">
+          <button id="refresh" type="button">Refresh live data</button>
+        </div>
+      </header>
+
+      <section class="meta" aria-label="Dashboard metadata">
+        <span class="pill" id="last-updated">Waiting for live data...</span>
+        <span class="pill">Source: TfL Unified API</span>
+        <span class="pill">Zones: 1-6</span>
+      </section>
+
+      <div class="status-banner" id="error" role="alert"></div>
+      <section class="grid loading" id="lines" aria-live="polite"></section>
+
+      <footer>
+        Statuses refresh from <code>api.tfl.gov.uk/Line/Mode/tube/Status</code>.
+        Some lines operate beyond zone 6; this dashboard focuses on the Tube
+        network serving zones 1-6 and reports TfL's current line-level status.
+      </footer>
+    </main>
+
+    <script>
+      const TFL_STATUS_URL = "https://api.tfl.gov.uk/Line/Mode/tube/Status";
+
+      const LINES = [
+        {
+          id: "bakerloo",
+          name: "Bakerloo",
+          colour: "#B36305",
+          zones: "Zones 1-5",
+          route: "Harrow & Wealdstone - Elephant & Castle",
+        },
+        {
+          id: "central",
+          name: "Central",
+          colour: "#E32017",
+          zones: "Zones 1-6",
+          route: "West Ruislip / Ealing Broadway - Epping / Hainault",
+        },
+        {
+          id: "circle",
+          name: "Circle",
+          colour: "#FFD300",
+          zones: "Zones 1-2",
+          route: "Hammersmith - Edgware Road - Tower Hill - Hammersmith",
+        },
+        {
+          id: "district",
+          name: "District",
+          colour: "#00782A",
+          zones: "Zones 1-6",
+          route: "Upminster / Edgware Road - Richmond / Wimbledon / Ealing Broadway",
+        },
+        {
+          id: "hammersmith-city",
+          name: "Hammersmith & City",
+          colour: "#F3A9BB",
+          zones: "Zones 1-3",
+          route: "Hammersmith - Barking",
+        },
+        {
+          id: "jubilee",
+          name: "Jubilee",
+          colour: "#A0A5A9",
+          zones: "Zones 1-6",
+          route: "Stanmore - Stratford",
+        },
+        {
+          id: "metropolitan",
+          name: "Metropolitan",
+          colour: "#9B0056",
+          zones: "Zones 1-6+",
+          route: "Aldgate - Amersham / Chesham / Uxbridge / Watford",
+        },
+        {
+          id: "northern",
+          name: "Northern",
+          colour: "#000000",
+          zones: "Zones 1-5",
+          route: "High Barnet / Edgware - Battersea Power Station / Morden",
+        },
+        {
+          id: "piccadilly",
+          name: "Piccadilly",
+          colour: "#003688",
+          zones: "Zones 1-6",
+          route: "Cockfosters - Heathrow / Uxbridge",
+        },
+        {
+          id: "victoria",
+          name: "Victoria",
+          colour: "#0098D4",
+          zones: "Zones 1-3",
+          route: "Walthamstow Central - Brixton",
+        },
+        {
+          id: "waterloo-city",
+          name: "Waterloo & City",
+          colour: "#95CDBA",
+          zones: "Zone 1",
+          route: "Waterloo - Bank",
+        },
+      ];
+
+      const lineContainer = document.querySelector("#lines");
+      const refreshButton = document.querySelector("#refresh");
+      const lastUpdated = document.querySelector("#last-updated");
+      const errorBanner = document.querySelector("#error");
+
+      function statusClass(severity) {
+        if (severity >= 10) return "good";
+        if (severity >= 6) return "warning";
+        return "bad";
+      }
+
+      function sanitize(text) {
+        const div = document.createElement("div");
+        div.textContent = text ?? "";
+        return div.innerHTML;
+      }
+
+      function render(linesById = new Map()) {
+        lineContainer.innerHTML = LINES.map((line) => {
+          const live = linesById.get(line.id);
+          const lineStatus = live?.lineStatuses?.[0];
+          const statusText =
+            lineStatus?.statusSeverityDescription ?? "Loading status";
+          const severity = lineStatus?.statusSeverity;
+          const reason =
+            lineStatus?.reason ||
+            (statusText === "Good Service"
+              ? "No current disruptions reported by TfL."
+              : "TfL has not provided additional details.");
+          const statusTone =
+            typeof severity === "number" ? statusClass(severity) : "";
+
+          return `
+            <article class="line-card" style="--line-colour: ${line.colour}">
+              <div class="card-inner">
+                <div>
+                  <div class="line-head">
+                    <h2 class="line-name">${sanitize(line.name)}</h2>
+                    <span class="line-swatch" aria-hidden="true"></span>
+                  </div>
+                  <div class="zone">${sanitize(line.zones)}</div>
+                </div>
+                <div class="status-row">
+                  <span class="status ${statusTone}">${sanitize(statusText)}</span>
+                  ${
+                    typeof severity === "number"
+                      ? `<span class="severity">TfL severity ${severity}/10</span>`
+                      : ""
+                  }
+                </div>
+                <p class="reason">${sanitize(reason)}</p>
+                <div class="route">${sanitize(line.route)}</div>
+              </div>
+            </article>
+          `;
+        }).join("");
+      }
+
+      async function loadStatuses() {
+        refreshButton.disabled = true;
+        refreshButton.textContent = "Refreshing...";
+        lineContainer.classList.add("loading");
+        errorBanner.classList.remove("visible");
+
+        try {
+          const response = await fetch(TFL_STATUS_URL, {
+            headers: { Accept: "application/json" },
+          });
+
+          if (!response.ok) {
+            throw new Error(`TfL returned HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
+          const linesById = new Map(data.map((line) => [line.id, line]));
+          render(linesById);
+          lastUpdated.textContent = `Updated ${new Intl.DateTimeFormat("en-GB", {
+            dateStyle: "medium",
+            timeStyle: "medium",
+          }).format(new Date())}`;
+        } catch (error) {
+          render();
+          errorBanner.textContent =
+            `Live TfL data could not be loaded. ${error.message}`;
+          errorBanner.classList.add("visible");
+          lastUpdated.textContent = "Live data unavailable";
+        } finally {
+          refreshButton.disabled = false;
+          refreshButton.textContent = "Refresh live data";
+          lineContainer.classList.remove("loading");
+        }
+      }
+
+      refreshButton.addEventListener("click", loadStatuses);
+      render();
+      loadStatuses();
+      setInterval(loadStatuses, 60_000);
+    </script>
+  </body>
+</html>
