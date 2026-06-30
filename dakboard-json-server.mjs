@@ -5,7 +5,10 @@ import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.env.PORT || 8787);
 const HOST = process.env.HOST || "127.0.0.1";
-const TFL_STATUS_URL = "https://api.tfl.gov.uk/Line/Mode/tube/Status";
+const TFL_STATUS_URLS = [
+  "https://api.tfl.gov.uk/Line/Mode/tube/Status",
+  "https://api.tfl.gov.uk/Line/Mode/elizabeth-line/Status",
+];
 const CACHE_MS = Math.max(Number(process.env.CACHE_SECONDS || 30), 10) * 1000;
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 
@@ -14,6 +17,12 @@ const LINES = [
   { id: "central", name: "Central", colour: "#E32017", zones: "Zones 1-6" },
   { id: "circle", name: "Circle", colour: "#FFD300", zones: "Zones 1-2" },
   { id: "district", name: "District", colour: "#00782A", zones: "Zones 1-6" },
+  {
+    id: "elizabeth",
+    name: "Elizabeth line",
+    colour: "#6950A1",
+    zones: "Zones 1-6+",
+  },
   {
     id: "hammersmith-city",
     name: "Hammersmith & City",
@@ -66,15 +75,17 @@ async function getTfLStatus() {
     return cachedTfL;
   }
 
-  const response = await fetch(TFL_STATUS_URL, {
-    headers: { Accept: "application/json" },
-  });
+  cachedTfL = (await Promise.all(TFL_STATUS_URLS.map(async (url) => {
+    const response = await fetch(url, {
+      headers: { Accept: "application/json" },
+    });
 
-  if (!response.ok) {
-    throw new Error(`TfL returned HTTP ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(`TfL returned HTTP ${response.status}`);
+    }
 
-  cachedTfL = await response.json();
+    return response.json();
+  }))).flat();
   cachedAt = now;
   return cachedTfL;
 }
@@ -139,7 +150,7 @@ async function tubeStatusPayload(searchParams) {
   return {
     updatedAt: new Date().toISOString(),
     source: "Transport for London Unified API",
-    sourceUrl: TFL_STATUS_URL,
+    sourceUrls: TFL_STATUS_URLS,
     summary: {
       selected: selectedLines.length,
       returned: lines.length,
@@ -147,8 +158,8 @@ async function tubeStatusPayload(searchParams) {
       issues: issueCount,
       message:
         issueCount === 0
-          ? "All selected Tube lines are reporting good service."
-          : `${issueCount} selected Tube line${issueCount === 1 ? " has" : "s have"} reported issues.`,
+          ? "All selected TfL lines are reporting good service."
+          : `${issueCount} selected TfL line${issueCount === 1 ? " has" : "s have"} reported issues.`,
     },
     lines,
   };

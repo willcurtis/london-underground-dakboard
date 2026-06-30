@@ -1,7 +1,7 @@
 # London Underground DAKboard
 
-Live London Underground status dashboards and DAKboard-friendly widgets using
-Transport for London's public Unified API.
+Live London Underground and Elizabeth line status dashboards plus
+DAKboard-friendly widgets using Transport for London's public Unified API.
 
 ## Files
 
@@ -50,7 +50,7 @@ Examples:
 /dakboard-widget.html
 /dakboard-widget.html?show=issues
 /dakboard-widget.html?layout=grid&theme=transparent&title=0&meta=0
-/dakboard-widget.html?lines=central,jubilee,piccadilly,victoria
+/dakboard-widget.html?lines=central,elizabeth,jubilee,piccadilly,victoria
 ```
 
 For JSON/external data blocks, deploy the Node server and use:
@@ -58,7 +58,7 @@ For JSON/external data blocks, deploy the Node server and use:
 ```text
 /api/tube-status.json
 /api/tube-status.json?show=issues
-/api/tube-status.json?lines=central,jubilee,piccadilly,victoria
+/api/tube-status.json?lines=central,elizabeth,jubilee,piccadilly,victoria
 ```
 
 ## Notes
@@ -67,6 +67,7 @@ The browser widgets fetch live data directly from:
 
 ```text
 https://api.tfl.gov.uk/Line/Mode/tube/Status
+https://api.tfl.gov.uk/Line/Mode/elizabeth-line/Status
 ```
 
 The JSON server caches TfL responses briefly to avoid unnecessary API traffic.

@@ -1,4 +1,4 @@
-# DAKboard Tube Status JSON Endpoint
+# DAKboard TfL Status JSON Endpoint
 
 Run the endpoint server:
 
@@ -22,8 +22,8 @@ External Data or JSON-powered block.
 /api/tube-status.json
 /api/tube-status.json?pretty=1
 /api/tube-status.json?show=issues
-/api/tube-status.json?lines=central,jubilee,piccadilly,victoria
-/api/tube-status.json?show=issues&lines=central,jubilee&pretty=1
+/api/tube-status.json?lines=central,elizabeth,jubilee,piccadilly,victoria
+/api/tube-status.json?show=issues&lines=central,elizabeth,jubilee&pretty=1
 ```
 
 - `lines`: comma-separated TfL line IDs.
@@ -33,8 +33,8 @@ External Data or JSON-powered block.
 Line IDs:
 
 ```text
-bakerloo, central, circle, district, hammersmith-city, jubilee,
-metropolitan, northern, piccadilly, victoria, waterloo-city
+bakerloo, central, circle, district, elizabeth, hammersmith-city,
+jubilee, metropolitan, northern, piccadilly, victoria, waterloo-city
 ```
 
 ## Response Shape
@@ -43,13 +43,16 @@ metropolitan, northern, piccadilly, victoria, waterloo-city
 {
   "updatedAt": "2026-06-30T06:00:00.000Z",
   "source": "Transport for London Unified API",
-  "sourceUrl": "https://api.tfl.gov.uk/Line/Mode/tube/Status",
+  "sourceUrls": [
+    "https://api.tfl.gov.uk/Line/Mode/tube/Status",
+    "https://api.tfl.gov.uk/Line/Mode/elizabeth-line/Status"
+  ],
   "summary": {
-    "selected": 11,
-    "returned": 11,
-    "goodService": 11,
+    "selected": 12,
+    "returned": 12,
+    "goodService": 12,
     "issues": 0,
-    "message": "All selected Tube lines are reporting good service."
+    "message": "All selected TfL lines are reporting good service."
   },
   "lines": [
     {

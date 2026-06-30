@@ -364,14 +364,17 @@
       </section>
 
       <footer>
-        Statuses refresh from <code>api.tfl.gov.uk/Line/Mode/tube/Status</code>.
-        Some lines operate beyond zone 6; this dashboard focuses on the Tube
-        network serving zones 1-6 and reports TfL's current line-level status.
+        Statuses refresh from TfL's Tube and Elizabeth line status endpoints.
+        Some lines operate beyond zone 6; this dashboard focuses on TfL rail
+        services serving zones 1-6 and reports current line-level status.
       </footer>
     </main>
 
     <script>
-      const TFL_STATUS_URL = "https://api.tfl.gov.uk/Line/Mode/tube/Status";
+      const TFL_STATUS_URLS = [
+        "https://api.tfl.gov.uk/Line/Mode/tube/Status",
+        "https://api.tfl.gov.uk/Line/Mode/elizabeth-line/Status",
+      ];
 
       const LINES = [
         {
@@ -401,6 +404,13 @@
           colour: "#00782A",
           zones: "Zones 1-6",
           route: "Upminster / Edgware Road - Richmond / Wimbledon / Ealing Broadway",
+        },
+        {
+          id: "elizabeth",
+          name: "Elizabeth line",
+          colour: "#6950A1",
+          zones: "Zones 1-6+",
+          route: "Reading / Heathrow - Shenfield / Abbey Wood",
         },
         {
           id: "hammersmith-city",
@@ -518,15 +528,17 @@
         errorBanner.classList.remove("visible");
 
         try {
-          const response = await fetch(TFL_STATUS_URL, {
-            headers: { Accept: "application/json" },
-          });
+          const data = (await Promise.all(TFL_STATUS_URLS.map(async (url) => {
+            const response = await fetch(url, {
+              headers: { Accept: "application/json" },
+            });
 
-          if (!response.ok) {
-            throw new Error(`TfL returned HTTP ${response.status}`);
-          }
+            if (!response.ok) {
+              throw new Error(`TfL returned HTTP ${response.status}`);
+            }
 
-          const data = await response.json();
+            return response.json();
+          }))).flat();
           const linesById = new Map(data.map((line) => [line.id, line]));
           render(linesById);
           lastUpdated.textContent = `Updated ${new Intl.DateTimeFormat("en-GB", {

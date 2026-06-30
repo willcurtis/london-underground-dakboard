@@ -272,13 +272,17 @@
     </main>
 
     <script>
-      const TFL_STATUS_URL = "https://api.tfl.gov.uk/Line/Mode/tube/Status";
+      const TFL_STATUS_URLS = [
+        "https://api.tfl.gov.uk/Line/Mode/tube/Status",
+        "https://api.tfl.gov.uk/Line/Mode/elizabeth-line/Status",
+      ];
 
       const LINES = [
         { id: "bakerloo", name: "Bakerloo", colour: "#B36305" },
         { id: "central", name: "Central", colour: "#E32017" },
         { id: "circle", name: "Circle", colour: "#FFD300" },
         { id: "district", name: "District", colour: "#00782A" },
+        { id: "elizabeth", name: "Elizabeth line", colour: "#6950A1" },
         { id: "hammersmith-city", name: "Hammersmith & City", colour: "#F3A9BB" },
         { id: "jubilee", name: "Jubilee", colour: "#A0A5A9" },
         { id: "metropolitan", name: "Metropolitan", colour: "#9B0056" },
@@ -386,15 +390,17 @@
 
       async function loadStatuses() {
         try {
-          const response = await fetch(TFL_STATUS_URL, {
-            headers: { Accept: "application/json" },
-          });
+          const data = (await Promise.all(TFL_STATUS_URLS.map(async (url) => {
+            const response = await fetch(url, {
+              headers: { Accept: "application/json" },
+            });
 
-          if (!response.ok) {
-            throw new Error(`TfL returned HTTP ${response.status}`);
-          }
+            if (!response.ok) {
+              throw new Error(`TfL returned HTTP ${response.status}`);
+            }
 
-          const data = await response.json();
+            return response.json();
+          }))).flat();
           const linesById = new Map(data.map((line) => [line.id, line]));
           render(linesById);
           updated.textContent = `Updated ${new Intl.DateTimeFormat("en-GB", {
